@@ -277,7 +277,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t public.ecr.aws/v6x4t1k
 docker buildx build --platform linux/amd64,linux/arm64 -t public.ecr.aws/v6x4t1k2/shippingservice:<tag-name> --push src/shippingservice/
 ```
 
-4. Update the `spec.template.spec.containers.image` in the respective `tsre-microservices/ctf/<servicename>.yaml` file with the appropriate tag.
+4. Update the `spec.template.spec.containers.image` in the respective `tsre-microservices/kubernetes-manifests/<servicename>.yaml` file with the appropriate tag.
 
 ## Misc
 
