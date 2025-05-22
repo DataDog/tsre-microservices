@@ -15,6 +15,7 @@ services:
         - DD_TAGS='env:tsreenv'
         - DD_DOCKER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
         - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
+        - DD_SYSTEM_PROBE_SERVICE_MONITORING_ENABLED=true
         # Security Agent Configuration
         - DD_SECURITY_AGENT_COMPLIANCE_ENABLED=true
         - DD_SECURITY_AGENT_RUNTIME_ENABLED=true
@@ -39,6 +40,29 @@ services:
         - /proc/:/host/proc/:ro
         - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
         - /var/run/datadog:/var/run/datadog
+        - /sys/kernel/debug:/sys/kernel/debug
+        - /lib/modules:/lib/modules
+        - /usr/src:/usr/src
+        - /var/tmp/datadog-agent/system-probe/build:/var/tmp/datadog-agent/system-probe/build
+        - /var/tmp/datadog-agent/system-probe/kernel-headers:/var/tmp/datadog-agent/system-probe/kernel-headers
+        - /etc/apt:/host/etc/apt
+        - /etc/yum.repos.d:/host/etc/yum.repos.d
+        - /etc/zypp:/host/etc/zypp
+        - /etc/pki:/host/etc/pki
+        - /etc/yum/vars:/host/etc/yum/vars
+        - /etc/dnf/vars:/host/etc/dnf/vars
+        - /etc/rhsm:/host/etc/rhsm
+      cap_add:
+        - SYS_ADMIN
+        - SYS_RESOURCE
+        - SYS_PTRACE
+        - NET_ADMIN
+        - NET_BROADCAST
+        - NET_RAW
+        - IPC_LOCK
+        - CHOWN
+      security_opt:
+        - apparmor:unconfined
       labels:
         com.datadoghq.ad.logs: '[{"source": "agent", "service": "agent"}]'
   emailservice:
@@ -157,10 +181,10 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MariaDBDialect
       - DISABLE_PROFILER=1
-      - DISABLE_TRACING=1
       - DD_LOGS_INJECTION=true
       - DD_TRACE_SAMPLE_RATE=1
       - DD_PROFILING_ENABLED=true
+      - DD_RUNTIME_METRICS_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
     depends_on:
