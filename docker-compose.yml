@@ -41,17 +41,6 @@ services:
         - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
         - /var/run/datadog:/var/run/datadog
         - /sys/kernel/debug:/sys/kernel/debug
-        - /lib/modules:/lib/modules
-        - /usr/src:/usr/src
-        - /var/tmp/datadog-agent/system-probe/build:/var/tmp/datadog-agent/system-probe/build
-        - /var/tmp/datadog-agent/system-probe/kernel-headers:/var/tmp/datadog-agent/system-probe/kernel-headers
-        - /etc/apt:/host/etc/apt
-        - /etc/yum.repos.d:/host/etc/yum.repos.d
-        - /etc/zypp:/host/etc/zypp
-        - /etc/pki:/host/etc/pki
-        - /etc/yum/vars:/host/etc/yum/vars
-        - /etc/dnf/vars:/host/etc/dnf/vars
-        - /etc/rhsm:/host/etc/rhsm
       cap_add:
         - SYS_ADMIN
         - SYS_RESOURCE
@@ -109,12 +98,11 @@ services:
       - DD_SERVICE=recommendationservice
       - DD_VERSION=0.5.0
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
-      - PORT=8080
+      - DD_TRACE_ENABLED=true
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
-      - DISABLE_PROFILER=1
-      - DISABLE_DEBUGGER=1
-      - ENABLE_TRACING=0
-      - DD_GRPC_SERVICE=recommendationservice
+      - PORT=8082
       - DD_PROFILING_ENABLED=true
       - DD_LOGS_INJECTION=true
       - DD_TRACE_SAMPLE_RATE=1
@@ -180,9 +168,11 @@ services:
       - SPRING_DATASOURCE_PASSWORD=weLoveSwagAtDash2023
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MariaDBDialect
-      - DISABLE_PROFILER=1
       - DD_LOGS_INJECTION=true
       - DD_TRACE_SAMPLE_RATE=1
+      - DD_TRACE_ENABLED=true
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_PROFILING_ENABLED=true
       - DD_RUNTIME_METRICS_ENABLED=true
     volumes:
@@ -248,7 +238,7 @@ services:
     build:
       context: ./src/frontend
     ports:
-      - "8088:8088"
+      - "80:8088"
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=frontend

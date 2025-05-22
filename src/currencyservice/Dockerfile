@@ -18,12 +18,12 @@
 
 #FROM --platform=$BUILDPLATFORM node:19.3.0-alpine as base
 #FROM --platform=linux/amd64 node:19.3.0-alpine as base
-FROM --platform=$TARGETPLATFORM node:19.3.0-alpine as base
+FROM --platform=$TARGETPLATFORM node:19.3.0-alpine AS base
 RUN echo "BUILDPLATFORM = ${BUILDPLATFORM}"
 RUN echo "TARGETPLATFORM = ${TARGETPLATFORM}"
 
 
-FROM --platform=$BUILDPLATFORM base as builder
+FROM --platform=$BUILDPLATFORM base AS builder
 
 # Some packages (e.g. @google-cloud/profiler) require additional
 # deps for post-install scripts
@@ -38,7 +38,7 @@ COPY package*.json ./
 
 RUN npm install --only=production
 
-FROM base as without-grpc-health-probe-bin
+FROM base AS without-grpc-health-probe-bin
 
 WORKDIR /usr/src/app
 

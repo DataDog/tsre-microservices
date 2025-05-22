@@ -15,10 +15,10 @@
 # FROM python:3.10.8-slim@sha256:49749648f4426b31b20fca55ad854caa55ff59dc604f2f76b57d814e0a47c181 as base
 
 #FROM --platform=$BUILDPLATFORM python:3.10.8-slim as base
-FROM --platform=$BUILDPLATFORM python:3.10.8-slim as base
+FROM --platform=$BUILDPLATFORM python:3.10.8-slim AS base
 RUN echo "BUILDPLATFORM = ${BUILDPLATFORM}"
 
-FROM base as builder
+FROM base AS builder
 
 RUN apt-get -qq update \
     && apt-get install -y --no-install-recommends \
@@ -44,7 +44,7 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.14 && \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-FROM base as without-grpc-health-probe-bin
+FROM base AS without-grpc-health-probe-bin
 # Enable unbuffered logging
 ENV PYTHONUNBUFFERED=1
 
@@ -53,12 +53,13 @@ WORKDIR /recommendationservice
 
 # Grab packages from builder
 COPY --from=builder /usr/local/lib/python3.10/ /usr/local/lib/python3.10/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Add the application
 COPY . .
 
 # set listen port
-ENV PORT "8080"
+ENV PORT=8080
 EXPOSE 8080
 
 ENTRYPOINT ["python", "recommendation_server.py"]
