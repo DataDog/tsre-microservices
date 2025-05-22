@@ -1,0 +1,357 @@
+services:
+  agent:
+      image: gcr.io/datadoghq/agent:latest
+      environment:
+        - DD_API_KEY
+        - DD_ENV=dev
+        - DD_LOGS_ENABLED=true
+        - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+        - DD_PROCESS_AGENT_ENABLED=true
+        - DD_APM_ENABLED=true
+        - DD_APM_NON_LOCAL_TRAFFIC=true
+        - DD_APM_RECEIVER_SOCKET=/var/run/datadog/apm.socket
+        - DD_DOGSTATSD_SOCKET=/var/run/datadog/dsd.socket
+        - DD_HOSTNAME=dockeragent
+        - DD_TAGS='env:tsreenv'
+        - DD_DOCKER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
+        - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
+        # Security Agent Configuration
+        - DD_SECURITY_AGENT_COMPLIANCE_ENABLED=true
+        - DD_SECURITY_AGENT_RUNTIME_ENABLED=true
+        - DD_SECURITY_AGENT_RUNTIME_FIM_ENABLED=true
+        - DD_SECURITY_AGENT_RUNTIME_NETWORK_ENABLED=true
+        # Service Monitoring
+        - DD_SERVICE_MONITORING_ENABLED=true
+        # Network Monitoring
+        - DD_NETWORK_MONITORING_ENABLED=true
+        # OTLP Configuration
+        - DD_OTLP_RECEIVER_PROTOCOLS_GRPC_ENABLED=false
+        - DD_OTLP_RECEIVER_PROTOCOLS_GRPC_ENDPOINT=0.0.0.0:4317
+        - DD_OTLP_RECEIVER_PROTOCOLS_GRPC_USE_HOST_PORT=true
+        - DD_OTLP_RECEIVER_PROTOCOLS_HTTP_ENABLED=false
+        - DD_OTLP_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318
+        - DD_OTLP_RECEIVER_PROTOCOLS_HTTP_USE_HOST_PORT=true
+      ports:
+        - "8126:8126/tcp"
+        - "8125:8125/udp"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        - /proc/:/host/proc/:ro
+        - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+        - /var/run/datadog:/var/run/datadog
+      labels:
+        com.datadoghq.ad.logs: '[{"source": "agent", "service": "agent"}]'
+  emailservice:
+    build:
+      context: ./src/emailservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=emailservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=8080
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=0
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+
+  productcatalogservice:
+    build:
+      context: ./src/productcatalogservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=productcatalogservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=3550
+      - DISABLE_STATS=1
+      - DISABLE_TRACING=1
+      - DISABLE_PROFILER=1
+      - DD_PROFILING_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+
+  recommendationservice:
+    build:
+      context: ./src/recommendationservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=recommendationservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=8080
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - DISABLE_PROFILER=1
+      - DISABLE_DEBUGGER=1
+      - ENABLE_TRACING=0
+      - DD_GRPC_SERVICE=recommendationservice
+      - DD_PROFILING_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+
+  shippingservice:
+    build:
+      context: ./src/shippingservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=shippingservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=50051
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+
+  checkoutservice:
+    build:
+      context: ./src/checkoutservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=checkoutservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=5050
+      - PAYMENT_SERVICE_ADDR=paymentservice:9090
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051
+      - EMAIL_SERVICE_ADDR=emailservice:8080
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - CART_SERVICE_ADDR=cartservice:7070
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+
+  paymentservice:
+    build:
+      context: ./src/paymentservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=paymentservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=9090
+      - PAYMENT_DB_HOST=paymentdbservice
+      - PAYMENT_DB_PORT=3306
+      - PAYMENT_DB_USER=swagstore
+      - PAYMENT_DB_PASSWORD=weLoveSwagAtDash2023
+      - PAYMENT_DB_NAME=paymentdb
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://paymentdbservice:3306/paymentdb?useUnicode=true&characterEncoding=utf8&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=swagstore
+      - SPRING_DATASOURCE_PASSWORD=weLoveSwagAtDash2023
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MariaDBDialect
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+    depends_on:
+      paymentdbservice:
+        condition: service_healthy
+    restart: on-failure
+
+  currencyservice:
+    build:
+      context: ./src/currencyservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=currencyservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=7000
+      - DISABLE_PROFILER=1
+      - DISABLE_DEBUGGER=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+      - DD_RUNTIME_METRICS_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+
+  cartservice:
+    build:
+      context: ./src/cartservice/src
+      dockerfile: Dockerfile
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=cartservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=7070
+      - REDIS_ADDR=redis:6379
+      - REDIS_POOL_SIZE=10
+      - REDIS_POOL_MIN_IDLE=2
+      - REDIS_POOL_MAX_IDLE=5
+      - REDIS_POOL_MAX_ACTIVE=10
+      - REDIS_POOL_MAX_WAIT=2000
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:7070", "-rpc-timeout=5s"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./src/frontend
+    ports:
+      - "8088:8088"
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=frontend
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=8088
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - CART_SERVICE_ADDR=cartservice:7070
+      - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8080
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:5050
+      - AD_SERVICE_ADDR=adservice:9555
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+      - CART_SERVICE_RETRY_ATTEMPTS=3
+      - CART_SERVICE_RETRY_DELAY=1000
+      - CART_SERVICE_TIMEOUT=5000
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+    depends_on:
+      cartservice:
+        condition: service_healthy
+    restart: on-failure
+
+  adservice:
+    build:
+      context: ./src/adservice
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=adservice
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - PORT=9555
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+
+  paymentdbservice:
+    build:
+      context: ./src/paymentdbservice
+    environment:
+      - MARIADB_ROOT_PASSWORD=topsecret
+      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=0
+      - MARIADB_DATABASE=paymentdb
+      - MARIADB_USER=swagstore
+      - MARIADB_PASSWORD=weLoveSwagAtDash2023
+    command: >
+      bash -c "
+      echo 'CREATE USER IF NOT EXISTS datadog@\"%\" IDENTIFIED BY \"datadog\";
+      GRANT REPLICATION CLIENT ON *.* TO datadog@\"%\";
+      GRANT PROCESS ON *.* TO datadog@\"%\";
+      GRANT SELECT ON performance_schema.* TO datadog@\"%\";
+      CREATE SCHEMA IF NOT EXISTS datadog;
+      GRANT EXECUTE ON datadog.* TO datadog@\"%\";
+      GRANT CREATE TEMPORARY TABLES ON datadog.* TO datadog@\"%\";
+      DELIMITER //
+      CREATE OR REPLACE PROCEDURE datadog.explain_statement(IN query TEXT)
+      SQL SECURITY DEFINER
+      BEGIN
+          SET @explain := CONCAT(\"EXPLAIN FORMAT=json \", query);
+          PREPARE stmt FROM @explain;
+          EXECUTE stmt;
+          DEALLOCATE PREPARE stmt;
+          SET @explain := NULL;
+      END //
+      DELIMITER ;
+      DELIMITER //
+      CREATE OR REPLACE PROCEDURE datadog.enable_events_statements_consumers()
+      SQL SECURITY DEFINER
+      BEGIN
+          UPDATE performance_schema.setup_consumers SET enabled=\"YES\" WHERE name LIKE \"%events_statements_%\";
+          UPDATE performance_schema.setup_consumers SET enabled=\"YES\" WHERE name=\"events_waits_current\";
+      END //
+      DELIMITER ;
+      CREATE SCHEMA IF NOT EXISTS paymentdb;
+      CREATE USER IF NOT EXISTS swagstore@\"%\" IDENTIFIED BY \"weLoveSwagAtDash2023\";
+      CREATE USER IF NOT EXISTS chris@\"%\" IDENTIFIED BY \"chris\";
+      GRANT ALL PRIVILEGES ON paymentdb.* TO swagstore@\"%\";
+      GRANT ALL PRIVILEGES ON paymentdb.* TO chris@\"%\";' > /docker-entrypoint-initdb.d/init.sql &&
+      docker-entrypoint.sh mariadbd"
+    volumes:
+      - paymentdb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c '>/dev/tcp/localhost/3306'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:alpine
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=redis
+      - DD_VERSION=0.5.0
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  loadgenerator:
+    build:
+      context: ./src/loadgenerator
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=loadgenerator
+      - DD_VERSION=0.5.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - FRONTEND_ADDR=frontend:8088
+      - DISABLE_PROFILER=1
+      - DISABLE_TRACING=1
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+    depends_on:
+      - frontend
+
+volumes:
+  paymentdb_data: 

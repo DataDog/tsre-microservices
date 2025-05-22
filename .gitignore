@@ -23,3 +23,4 @@ release/wi-kubernetes-manifests.yaml
 minikube-*
 *.env
 kubernetes-manifests-build-locally/
+src/frontend/static/styles/styles_new_style.css

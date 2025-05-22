@@ -15,7 +15,7 @@
 # FROM python:3.10.8-slim@sha256:49749648f4426b31b20fca55ad854caa55ff59dc604f2f76b57d814e0a47c181 as base
 
 #FROM --platform=$BUILDPLATFORM python:3.10.8-slim as base
-FROM --platform=linux/amd64 python:3.10.8-slim as base
+FROM --platform=$BUILDPLATFORM python:3.10.8-slim as base
 RUN echo "BUILDPLATFORM = ${BUILDPLATFORM}"
 
 FROM base as builder
