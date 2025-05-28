@@ -2,13 +2,12 @@ import os
 import sys
 import time
 from flask import Flask, jsonify
-import logging
+from logger import getJSONLogger
 
 app = Flask(__name__)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configure logging using the JSON logger
+logger = getJSONLogger('inventoryservice')
 
 # This will cause the service to crash on startup
 def check_required_services():
