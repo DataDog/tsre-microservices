@@ -17,6 +17,12 @@ services:
         DD_DOCKER_LABELS_AS_TAGS: '{"my.custom.label.team":"team"}'
         DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION: "true"
         DD_SYSTEM_PROBE_NETWORK_ENABLED: "true"
+        # Workload Security
+        DD_COMPLIANCE_CONFIG_ENABLED: "true"
+        DD_COMPLIANCE_CONFIG_HOST_BENCHMARKS_ENABLED: "true"
+        DD_RUNTIME_SECURITY_CONFIG_ENABLED: "true"
+        DD_RUNTIME_SECURITY_CONFIG_REMOTE_CONFIGURATION_ENABLED: "true"
+        HOST_ROOT: /host/root
       ports:
         - "8126:8126/tcp"
         - "8125:8125/udp"
@@ -31,6 +37,9 @@ services:
         - /sys/kernel/security:/host/sys/kernel/security:ro
         - /var/lib/docker/containers:/var/lib/docker/containers:ro
         - ./conf.d/redisdb.d:/etc/datadog-agent/conf.d/redisdb.d:ro
+        # workload Security
+        - /:/host/root:ro
+        - /etc/os-release:/etc/os-release:ro
       cap_add:
         - SYS_ADMIN
         - SYS_RESOURCE
@@ -46,9 +55,11 @@ services:
         com.datadoghq.ad.logs: '[{"source": "dd-agent", "service": "dd-agent"}]'
       depends_on:
         - redis
+      pid: host
   emailservice:
     build:
       context: ./src/emailservice
+    image: tsre/emailservice:0.1.0
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=emailservice
@@ -67,6 +78,7 @@ services:
   productcatalogservice:
     build:
       context: ./src/productcatalogservice
+    image: tsre/productcatalogservice:0.1.0
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=productcatalogservice
@@ -85,6 +97,7 @@ services:
   recommendationservice:
     build:
       context: ./src/recommendationservice
+    image: tsre/recommendationservice:0.1.0
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=recommendationservice
@@ -104,6 +117,7 @@ services:
   shippingservice:
     build:
       context: ./src/shippingservice
+    image: tsre/shippingservice:0.2.1
     environment:
       - DD_ENV=tserenv
       - DD_SERVICE=shippingservice
@@ -121,6 +135,7 @@ services:
   checkoutservice:
     build:
       context: ./src/checkoutservice
+    image: tsre/checkoutservice:0.2.2
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=checkoutservice
@@ -144,6 +159,7 @@ services:
   paymentservice:
     build:
       context: ./src/paymentservice
+    image: tsre/paymentservice:0.6.1
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=paymentservice
@@ -167,6 +183,7 @@ services:
       - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_PROFILING_ENABLED=true
       - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_APPSEC_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
     depends_on:
@@ -177,6 +194,7 @@ services:
   currencyservice:
     build:
       context: ./src/currencyservice
+    image: tsre/currencyservice:0.3.4
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=currencyservice
@@ -196,6 +214,7 @@ services:
     build:
       context: ./src/cartservice/src
       dockerfile: Dockerfile
+    image: tsre/cartservice:0.1.4
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=cartservice
@@ -229,6 +248,7 @@ services:
   frontend:
     build:
       context: ./src/frontend
+    image: tsre/frontend:0.4.1
     ports:
       - "80:8088"
     environment:
@@ -262,6 +282,7 @@ services:
   adservice:
     build:
       context: ./src/adservice
+    image: tsre/adservice:0.3.0
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=adservice
@@ -279,6 +300,7 @@ services:
   paymentdbservice:
     build:
       context: ./src/paymentdbservice
+    image: tsre/paymentdbservice:0.2.4
     environment:
       - MARIADB_ROOT_PASSWORD=topsecret
       - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=0
@@ -348,6 +370,7 @@ services:
   loadgenerator:
     build:
       context: ./src/loadgenerator
+    image: tsre/loadgenerator:0.1.0
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=loadgenerator
@@ -363,6 +386,29 @@ services:
       - /var/run/datadog:/var/run/datadog
     depends_on:
       - frontend
+
+  inventoryservice:
+    build:
+      context: ./src/inventoryservice
+    image: tsre/inventoryservice:0.1.0
+    environment:
+      - DD_ENV=tsreenv
+      - DD_SERVICE=inventoryservice
+      - DD_VERSION=0.1.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_PROFILING_ENABLED=true
+      - PORT=8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+    restart: unless-stopped
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "inventoryservice", "service": "inventoryservice"}]'
+    depends_on:
+      - redis
 
 volumes:
   paymentdb_data: 
