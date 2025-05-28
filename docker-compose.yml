@@ -302,8 +302,11 @@ services:
       CREATE USER IF NOT EXISTS chris@\"%\" IDENTIFIED BY \"chris\";
       GRANT ALL PRIVILEGES ON paymentdb.* TO swagstore@\"%\";
       GRANT ALL PRIVILEGES ON paymentdb.* TO chris@\"%\";
+      USE datadog;
+      DROP PROCEDURE IF EXISTS explain_statement;
+      DROP PROCEDURE IF EXISTS enable_events_statements_consumers;
       DELIMITER //
-      CREATE OR REPLACE PROCEDURE datadog.explain_statement(IN query TEXT)
+      CREATE PROCEDURE explain_statement(IN query TEXT)
       SQL SECURITY DEFINER
       BEGIN
           SET @explain := CONCAT(\"EXPLAIN FORMAT=json \", query);
@@ -312,7 +315,7 @@ services:
           DEALLOCATE PREPARE stmt;
           SET @explain := NULL;
       END //
-      CREATE OR REPLACE PROCEDURE datadog.enable_events_statements_consumers()
+      CREATE PROCEDURE enable_events_statements_consumers()
       SQL SECURITY DEFINER
       BEGIN
           UPDATE performance_schema.setup_consumers SET enabled=\"YES\" WHERE name LIKE \"%events_statements_%\";
