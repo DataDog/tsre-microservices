@@ -1,7 +1,7 @@
+name: tsre
 services:
   dd-agent:
       image: gcr.io/datadoghq/agent:7.66.0
-      container_name: dd-agent
       environment:
         DD_API_KEY: ${DD_API_KEY}
         DD_ENV: tsreenv
@@ -61,7 +61,6 @@ services:
     build:
       context: ./src/emailservice
     image: tsre/emailservice:0.1.0
-    container_name: emailservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=emailservice
@@ -81,7 +80,6 @@ services:
     build:
       context: ./src/productcatalogservice
     image: tsre/productcatalogservice:0.1.0
-    container_name: productcatalogservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=productcatalogservice
@@ -101,7 +99,6 @@ services:
     build:
       context: ./src/recommendationservice
     image: tsre/recommendationservice:0.1.0
-    container_name: recommendationservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=recommendationservice
@@ -122,7 +119,6 @@ services:
     build:
       context: ./src/shippingservice
     image: tsre/shippingservice:0.2.1
-    container_name: shippingservice
     environment:
       - DD_ENV=tserenv
       - DD_SERVICE=shippingservice
@@ -141,7 +137,6 @@ services:
     build:
       context: ./src/checkoutservice
     image: tsre/checkoutservice:0.2.2
-    container_name: checkoutservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=checkoutservice
@@ -166,7 +161,6 @@ services:
     build:
       context: ./src/paymentservice
     image: tsre/paymentservice:0.6.1
-    container_name: paymentservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=paymentservice
@@ -202,7 +196,6 @@ services:
     build:
       context: ./src/currencyservice
     image: tsre/currencyservice:0.3.4
-    container_name: currencyservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=currencyservice
@@ -223,7 +216,6 @@ services:
       context: ./src/cartservice/src
       dockerfile: Dockerfile
     image: tsre/cartservice:0.1.4
-    container_name: cartservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=cartservice
@@ -258,7 +250,6 @@ services:
     build:
       context: ./src/frontend
     image: tsre/frontend:0.4.1
-    container_name: frontend
     ports:
       - "80:8088"
     environment:
@@ -293,7 +284,6 @@ services:
     build:
       context: ./src/adservice
     image: tsre/adservice:0.3.0
-    container_name: adservice
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=adservice
@@ -312,7 +302,6 @@ services:
     build:
       context: ./src/paymentdbservice
     image: tsre/paymentdbservice:0.2.4
-    container_name: paymentdbservice
     environment:
       - MARIADB_ROOT_PASSWORD=topsecret
       - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=0
@@ -369,7 +358,6 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: redis
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=redis
@@ -384,7 +372,6 @@ services:
     build:
       context: ./src/loadgenerator
     image: tsre/loadgenerator:0.1.0
-    container_name: loadgenerator
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=loadgenerator
@@ -405,7 +392,6 @@ services:
     build:
       context: ./src/inventoryservice
     image: tsre/inventoryservice:0.1.0
-    container_name: inventoryservice
     restart: on-failure
     environment:
       - DD_ENV=tsreenv
