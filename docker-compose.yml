@@ -398,10 +398,13 @@ services:
       - DD_SERVICE=inventoryservice
       - DD_VERSION=0.1.0
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - DD_TRACE_ENABLED=true
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_LOGS_INJECTION=true
       - DD_TRACE_SAMPLE_RATE=1
       - DD_PROFILING_ENABLED=true
-      - PORT=8080
+      - PORT=8081
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     volumes:
