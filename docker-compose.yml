@@ -88,7 +88,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=recommendationservice
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.1.0
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - DD_TRACE_ENABLED=true
       - DD_APM_ENABLED=true
@@ -105,9 +105,9 @@ services:
     build:
       context: ./src/shippingservice
     environment:
-      - DD_ENV=tsreenv
+      - DD_ENV=tserenv
       - DD_SERVICE=shippingservice
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.2.1
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=50051
       - DISABLE_PROFILER=1
@@ -124,7 +124,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=checkoutservice
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.2.2
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=5050
       - PAYMENT_SERVICE_ADDR=paymentservice:9090
@@ -147,7 +147,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=paymentservice
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.6.1
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=9090
       - PAYMENT_DB_HOST=paymentdbservice
@@ -180,7 +180,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=currencyservice
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.3.4
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=7000
       - DISABLE_PROFILER=1
@@ -199,7 +199,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=cartservice
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.1.4
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=7070
       - REDIS_ADDR=redis:6379
@@ -234,7 +234,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=frontend
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.4.1
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=8088
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
@@ -265,7 +265,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=adservice
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.3.0
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=9555
       - DISABLE_PROFILER=1
@@ -285,6 +285,9 @@ services:
       - MARIADB_DATABASE=paymentdb
       - MARIADB_USER=swagstore
       - MARIADB_PASSWORD=weLoveSwagAtDash2023
+      - DD_ENV=tsreenv
+      - DD_SERVICE=paymentdbservice
+      - DD_VERSION=0.2.4
     command: >
       bash -c "
       echo 'CREATE USER IF NOT EXISTS datadog@\"%\" IDENTIFIED BY \"datadog\";
@@ -294,6 +297,11 @@ services:
       CREATE SCHEMA IF NOT EXISTS datadog;
       GRANT EXECUTE ON datadog.* TO datadog@\"%\";
       GRANT CREATE TEMPORARY TABLES ON datadog.* TO datadog@\"%\";
+      CREATE SCHEMA IF NOT EXISTS paymentdb;
+      CREATE USER IF NOT EXISTS swagstore@\"%\" IDENTIFIED BY \"weLoveSwagAtDash2023\";
+      CREATE USER IF NOT EXISTS chris@\"%\" IDENTIFIED BY \"chris\";
+      GRANT ALL PRIVILEGES ON paymentdb.* TO swagstore@\"%\";
+      GRANT ALL PRIVILEGES ON paymentdb.* TO chris@\"%\";
       DELIMITER //
       CREATE OR REPLACE PROCEDURE datadog.explain_statement(IN query TEXT)
       SQL SECURITY DEFINER
@@ -304,20 +312,13 @@ services:
           DEALLOCATE PREPARE stmt;
           SET @explain := NULL;
       END //
-      DELIMITER ;
-      DELIMITER //
       CREATE OR REPLACE PROCEDURE datadog.enable_events_statements_consumers()
       SQL SECURITY DEFINER
       BEGIN
           UPDATE performance_schema.setup_consumers SET enabled=\"YES\" WHERE name LIKE \"%events_statements_%\";
           UPDATE performance_schema.setup_consumers SET enabled=\"YES\" WHERE name=\"events_waits_current\";
       END //
-      DELIMITER ;
-      CREATE SCHEMA IF NOT EXISTS paymentdb;
-      CREATE USER IF NOT EXISTS swagstore@\"%\" IDENTIFIED BY \"weLoveSwagAtDash2023\";
-      CREATE USER IF NOT EXISTS chris@\"%\" IDENTIFIED BY \"chris\";
-      GRANT ALL PRIVILEGES ON paymentdb.* TO swagstore@\"%\";
-      GRANT ALL PRIVILEGES ON paymentdb.* TO chris@\"%\";' > /docker-entrypoint-initdb.d/init.sql &&
+      DELIMITER ;' > /docker-entrypoint-initdb.d/init.sql &&
       docker-entrypoint.sh mariadbd"
     volumes:
       - paymentdb_data:/var/lib/mysql
@@ -326,7 +327,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 10s
     restart: unless-stopped
 
   redis:
@@ -347,7 +348,7 @@ services:
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=loadgenerator
-      - DD_VERSION=0.5.0
+      - DD_VERSION=0.1.0
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - FRONTEND_ADDR=frontend:8088
       - DISABLE_PROFILER=1
