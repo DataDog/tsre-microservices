@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import random
+import redis
 from flask import Flask, jsonify
 from logger import getJSONLogger
 
@@ -13,26 +14,55 @@ logger = getJSONLogger('inventoryservice')
 # Simulate inventory data
 inventory_data = {}
 
-def process_inventory():
-    """Process inventory data with increasing complexity"""
+def connect_to_redis():
+    """Attempt to connect to Redis with increasing backoff"""
+    redis_host = os.getenv("REDIS_HOST", "redis")
+    redis_port = int(os.getenv("REDIS_PORT", "6379"))
+    
     try:
-        while True:
-            # Simulate inventory processing with less frequent updates
-            for i in range(100):  # Reduced from 1000
+        # Simulate Redis connection issues
+        if random.random() < 0.7:  # 70% chance of connection failure
+            raise redis.ConnectionError("Failed to connect to Redis")
+            
+        return redis.Redis(host=redis_host, port=redis_port)
+    except Exception as e:
+        logger.error(f"Redis connection failed: {str(e)}")
+        raise
+
+def process_inventory():
+    """Process inventory data with Redis dependency"""
+    backoff = 1
+    max_backoff = 30
+    
+    while True:
+        try:
+            # Try to connect to Redis
+            redis_client = connect_to_redis()
+            
+            # If we get here, connection was successful
+            logger.info("Successfully connected to Redis")
+            backoff = 1  # Reset backoff on success
+            
+            # Simulate normal inventory processing
+            for i in range(100):
                 product_id = f"PROD-{random.randint(1000, 9999)}"
                 inventory_data[product_id] = {
                     'stock': random.randint(0, 100),
-                    'reserved': random.randint(0, 50),
-                    'history': [random.randint(0, 100) for _ in range(100)]  # Reduced from 1000
+                    'reserved': random.randint(0, 50)
                 }
             
-            # Log normal operation
             logger.info(f"Processed {len(inventory_data)} products")
-            time.sleep(5)  # Increased sleep time to reduce resource usage
+            time.sleep(5)
             
-    except MemoryError:
-        logger.error("Inventory processing failed")
-        sys.exit(1)
+        except redis.ConnectionError as e:
+            logger.error(f"Redis connection error: {str(e)}")
+            # Exponential backoff
+            time.sleep(backoff)
+            backoff = min(backoff * 2, max_backoff)
+            
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            sys.exit(1)
 
 @app.route('/health')
 def health_check():
