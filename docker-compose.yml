@@ -6,32 +6,17 @@ services:
         - DD_ENV=dev
         - DD_LOGS_ENABLED=true
         - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-        - DD_PROCESS_AGENT_ENABLED=true
+        - DD_PROCESS_CONFIG_CONTAINER_COLLECTION_ENABLED=true
+        - DD_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED=true
         - DD_APM_ENABLED=true
         - DD_APM_NON_LOCAL_TRAFFIC=true
         - DD_APM_RECEIVER_SOCKET=/var/run/datadog/apm.socket
         - DD_DOGSTATSD_SOCKET=/var/run/datadog/dsd.socket
-        - DD_HOSTNAME=dockeragent
+        - DD_HOSTNAME=tsre_host
         - DD_TAGS='env:tsreenv'
         - DD_DOCKER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
         - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
-        - DD_SYSTEM_PROBE_SERVICE_MONITORING_ENABLED=true
-        # Security Agent Configuration
-        - DD_SECURITY_AGENT_COMPLIANCE_ENABLED=true
-        - DD_SECURITY_AGENT_RUNTIME_ENABLED=true
-        - DD_SECURITY_AGENT_RUNTIME_FIM_ENABLED=true
-        - DD_SECURITY_AGENT_RUNTIME_NETWORK_ENABLED=true
-        # Service Monitoring
-        - DD_SERVICE_MONITORING_ENABLED=true
-        # Network Monitoring
-        - DD_NETWORK_MONITORING_ENABLED=true
-        # OTLP Configuration
-        - DD_OTLP_RECEIVER_PROTOCOLS_GRPC_ENABLED=false
-        - DD_OTLP_RECEIVER_PROTOCOLS_GRPC_ENDPOINT=0.0.0.0:4317
-        - DD_OTLP_RECEIVER_PROTOCOLS_GRPC_USE_HOST_PORT=true
-        - DD_OTLP_RECEIVER_PROTOCOLS_HTTP_ENABLED=false
-        - DD_OTLP_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318
-        - DD_OTLP_RECEIVER_PROTOCOLS_HTTP_USE_HOST_PORT=true
+        - DD_SYSTEM_PROBE_ENABLED=true
       ports:
         - "8126:8126/tcp"
         - "8125:8125/udp"
@@ -41,6 +26,10 @@ services:
         - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
         - /var/run/datadog:/var/run/datadog
         - /sys/kernel/debug:/sys/kernel/debug
+        - /etc/passwd:/etc/passwd:ro
+        - /etc/group:/etc/group:ro
+        - /usr/lib/os-release:/usr/lib/os-release:ro
+        - /sys/kernel/security:/host/sys/kernel/security:ro
       cap_add:
         - SYS_ADMIN
         - SYS_RESOURCE
