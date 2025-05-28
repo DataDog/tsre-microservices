@@ -420,6 +420,12 @@ services:
       - REDIS_PORT=6379
     volumes:
       - /var/run/datadog:/var/run/datadog
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
 volumes:
   paymentdb_data: 
