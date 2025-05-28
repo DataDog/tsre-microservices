@@ -406,6 +406,7 @@ services:
       context: ./src/inventoryservice
     image: tsre/inventoryservice:0.1.0
     container_name: inventoryservice
+    restart: on-failure
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=inventoryservice
@@ -419,11 +420,6 @@ services:
       - REDIS_PORT=6379
     volumes:
       - /var/run/datadog:/var/run/datadog
-    restart: unless-stopped
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "inventoryservice", "service": "inventoryservice"}]'
-    depends_on:
-      - redis
 
 volumes:
   paymentdb_data: 
