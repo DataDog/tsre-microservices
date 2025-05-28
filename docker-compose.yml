@@ -4,7 +4,6 @@ services:
       environment:
         DD_API_KEY: ${DD_API_KEY}
         DD_ENV: tsreenv
-        DD_HOSTNAME: tsre_host
         DD_SITE: datadoghq.com
         DD_LOGS_ENABLED: "true"
         DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
