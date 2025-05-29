@@ -43,12 +43,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/propagation"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 var (
@@ -87,23 +81,15 @@ func main() {
 		profiler.WithProfileTypes(
 			profiler.CPUProfile,
 			profiler.HeapProfile,
-			// The profiles below are disabled by
-			// default to keep overhead low, but
-			// can be enabled as needed.
-			// profiler.BlockProfile,
-			// profiler.MutexProfile,
-			// profiler.GoroutineProfile,
 		),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer profiler.Stop()
-	if os.Getenv("ENABLE_TRACING") == "1" {
-		err := initTracing()
-		if err != nil {
-			log.Warnf("warn: failed to start tracer: %+v", err)
-		}
+
+	if os.Getenv("DISABLE_TRACING") == "" {
+		log.Info("Tracing enabled.")
 	} else {
 		log.Info("Tracing disabled.")
 	}
@@ -158,19 +144,13 @@ func run(port string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var srv *grpc.Server
-	if os.Getenv("ENABLE_TRACING") == "1" {
-		srv = grpc.NewServer(
-			grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-			grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()))
-	} else {
-		// Create the server interceptor using the grpc trace package.
-		si := grpctrace.StreamServerInterceptor(grpctrace.WithServiceName("productcatalogservice"))
-		ui := grpctrace.UnaryServerInterceptor(grpctrace.WithServiceName("productcatalogservice"))
-		srv = grpc.NewServer(
-			grpc.UnaryInterceptor(ui),
-			grpc.StreamInterceptor(si))
-	}
+
+	// Create the server interceptor using the grpc trace package.
+	si := grpctrace.StreamServerInterceptor(grpctrace.WithServiceName("productcatalogservice"))
+	ui := grpctrace.UnaryServerInterceptor(grpctrace.WithServiceName("productcatalogservice"))
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(ui),
+		grpc.StreamInterceptor(si))
 
 	svc := &productCatalog{}
 
@@ -184,33 +164,6 @@ func initStats() {
 	// TODO(drewbr) Implement OpenTelemetry stats
 }
 
-func initTracing() error {
-	var (
-		collectorAddr string
-		collectorConn *grpc.ClientConn
-	)
-
-	ctx := context.Background()
-
-	mustMapEnv(&collectorAddr, "COLLECTOR_SERVICE_ADDR")
-	mustConnGRPC(ctx, &collectorConn, collectorAddr)
-
-	exporter, err := otlptracegrpc.New(
-		ctx,
-		otlptracegrpc.WithGRPCConn(collectorConn))
-	if err != nil {
-		log.Warnf("warn: Failed to create trace exporter: %v", err)
-	}
-	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exporter),
-		sdktrace.WithSampler(sdktrace.AlwaysSample()))
-	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(
-		propagation.NewCompositeTextMapPropagator(
-			propagation.TraceContext{}, propagation.Baggage{}))
-	return err
-}
-
 func initProfiling(service, version string) {
 	// TODO(ahmetb) this method is duplicated in other microservices using Go
 	// since they are not sharing packages.
@@ -218,8 +171,6 @@ func initProfiling(service, version string) {
 		if err := profilerold.Start(profilerold.Config{
 			Service:        service,
 			ServiceVersion: version,
-			// ProjectID must be set if not running on GCP.
-			// ProjectID: "my-project",
 		}); err != nil {
 			log.Warnf("failed to start profiler: %+v", err)
 		} else {
@@ -299,35 +250,4 @@ func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProdu
 		}
 	}
 	return &pb.SearchProductsResponse{Results: ps}, nil
-}
-
-func mustMapEnv(target *string, envKey string) {
-	v := os.Getenv(envKey)
-	if v == "" {
-		panic(fmt.Sprintf("environment variable %q not set", envKey))
-	}
-	*target = v
-}
-
-func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
-	var err error
-	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
-	defer cancel()
-	if os.Getenv("ENABLE_TRACING") == "1" {
-		*conn, err = grpc.DialContext(ctx, addr,
-			grpc.WithInsecure(),
-			grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-			grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
-	} else {
-		// Create the client interceptor using the grpc trace package.
-		si := grpctrace.StreamClientInterceptor(grpctrace.WithServiceName("productcatalogservice"))
-		ui := grpctrace.UnaryClientInterceptor(grpctrace.WithServiceName("productcatalogservice"))
-		*conn, err = grpc.DialContext(ctx, addr,
-			grpc.WithInsecure(),
-			grpc.WithUnaryInterceptor(ui),
-			grpc.WithStreamInterceptor(si))
-	}
-	if err != nil {
-		panic(errors.Wrapf(err, "grpc: failed to connect %s", addr))
-	}
 }
