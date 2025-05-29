@@ -81,8 +81,6 @@ services:
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=3550
       - DISABLE_STATS=1
-      - DISABLE_TRACING=1
-      - DISABLE_PROFILER=1
       - DD_PROFILING_ENABLED=true
       - DD_LOGS_INJECTION=true
       - DD_TRACE_SAMPLE_RATE=1
@@ -123,8 +121,6 @@ services:
       - DD_VERSION=0.2.1
       - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - PORT=50051
-      - DISABLE_PROFILER=1
-      - DISABLE_TRACING=1
       - DD_LOGS_INJECTION=true
       - DD_TRACE_SAMPLE_RATE=1
       - DD_PROFILING_ENABLED=true
