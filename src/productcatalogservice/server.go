@@ -38,7 +38,6 @@ import (
 	profilerold "cloud.google.com/go/profiler"
 
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
