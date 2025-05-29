@@ -214,7 +214,7 @@ services:
     volumes:
       - /var/run/datadog:/var/run/datadog
     labels:
-      com.datadoghq.ad.logs: '[{"source": "javascript", "service": "currencyservice"}]'
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "currencyservice"}]'
 
   cartservice:
     build:
