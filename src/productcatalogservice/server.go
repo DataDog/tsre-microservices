@@ -35,8 +35,6 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 
-	profilerold "cloud.google.com/go/profiler"
-
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -151,23 +149,27 @@ func initStats() {
 }
 
 func initProfiling(service, version string) {
-	// TODO(ahmetb) this method is duplicated in other microservices using Go
-	// since they are not sharing packages.
-	for i := 1; i <= 3; i++ {
-		if err := profilerold.Start(profilerold.Config{
-			Service:        service,
-			ServiceVersion: version,
-		}); err != nil {
-			log.Warnf("failed to start profiler: %+v", err)
-		} else {
-			log.Info("started Stackdriver profiler")
-			return
-		}
-		d := time.Second * 10 * time.Duration(i)
-		log.Infof("sleeping %v to retry initializing Stackdriver profiler", d)
-		time.Sleep(d)
-	}
-	log.Warn("could not initialize Stackdriver profiler after retrying, giving up")
+    // TODO(ahmetb) this method is duplicated in other microservices using Go
+    // since they are not sharing packages.
+    for i := 1; i <= 3; i++ {
+        if err := profiler.Start(
+            profiler.WithService(service),
+            profiler.WithVersion(version),
+            profiler.WithProfileTypes(
+                profiler.CPUProfile,
+                profiler.HeapProfile,
+            ),
+        ); err != nil {
+            log.Warnf("failed to start profiler: %+v", err)
+        } else {
+            log.Info("started Datadog profiler")
+            return
+        }
+        d := time.Second * 10 * time.Duration(i)
+        log.Infof("sleeping %v to retry initializing Datadog profiler", d)
+        time.Sleep(d)
+    }
+    log.Warn("could not initialize Datadog profiler after retrying, giving up")
 }
 
 type productCatalog struct{}
