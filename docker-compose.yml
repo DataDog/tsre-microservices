@@ -8,6 +8,7 @@ services:
         DD_SITE: datadoghq.com
         DD_LOGS_ENABLED: "true"
         DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
+        DD_CONTAINER_EXCLUDE: "name:dd-agent"
         DD_PROCESS_CONFIG_CONTAINER_COLLECTION_ENABLED: "true"
         DD_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED: "true"
         DD_APM_ENABLED: "true"
@@ -18,12 +19,6 @@ services:
         DD_DOCKER_LABELS_AS_TAGS: '{"my.custom.label.team":"team"}'
         DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION: "true"
         DD_SYSTEM_PROBE_NETWORK_ENABLED: "true"
-        # Workload Security
-        DD_COMPLIANCE_CONFIG_ENABLED: "true"
-        DD_COMPLIANCE_CONFIG_HOST_BENCHMARKS_ENABLED: "true"
-        DD_RUNTIME_SECURITY_CONFIG_ENABLED: "true"
-        DD_RUNTIME_SECURITY_CONFIG_REMOTE_CONFIGURATION_ENABLED: "true"
-        HOST_ROOT: /host/root
       ports:
         - "8126:8126/tcp"
         - "8125:8125/udp"
@@ -38,9 +33,6 @@ services:
         - /sys/kernel/security:/host/sys/kernel/security:ro
         - /var/lib/docker/containers:/var/lib/docker/containers:ro
         - ./conf.d/redisdb.d:/etc/datadog-agent/conf.d/redisdb.d:ro
-        # workload Security
-        - /:/host/root:ro
-        - /etc/os-release:/etc/os-release:ro
       cap_add:
         - SYS_ADMIN
         - SYS_RESOURCE
@@ -75,6 +67,8 @@ services:
       - DD_PROFILING_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "emailservice"}]'
 
   productcatalogservice:
     build:
@@ -94,6 +88,8 @@ services:
       - DD_TRACE_SAMPLE_RATE=1
     volumes:
       - /var/run/datadog:/var/run/datadog
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "go", "service": "productcatalogservice"}]'
 
   recommendationservice:
     build:
@@ -114,6 +110,8 @@ services:
       - DD_TRACE_SAMPLE_RATE=1
     volumes:
       - /var/run/datadog:/var/run/datadog
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "recommendationservice"}]'
 
   shippingservice:
     build:
@@ -132,6 +130,8 @@ services:
       - DD_PROFILING_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "go", "service": "shippingservice"}]'
 
   checkoutservice:
     build:
@@ -156,7 +156,8 @@ services:
       - DD_PROFILING_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
-
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "go", "service": "checkoutservice"}]'
   paymentservice:
     build:
       context: ./src/paymentservice
@@ -191,6 +192,8 @@ services:
       paymentdbservice:
         condition: service_healthy
     restart: on-failure
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "paymentservice"}]'
 
   currencyservice:
     build:
@@ -210,6 +213,8 @@ services:
       - DD_RUNTIME_METRICS_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "javascript", "service": "currencyservice"}]'
 
   cartservice:
     build:
@@ -245,7 +250,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "csharp", "service": "cartservice"}]'
   frontend:
     build:
       context: ./src/frontend
@@ -275,10 +281,13 @@ services:
       - CART_SERVICE_TIMEOUT=5000
     volumes:
       - /var/run/datadog:/var/run/datadog
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "go", "service": "frontend"}]'
     depends_on:
       cartservice:
         condition: service_healthy
     restart: on-failure
+    
 
   adservice:
     build:
@@ -297,7 +306,8 @@ services:
       - DD_PROFILING_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
-
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "adservice"}]'
   paymentdbservice:
     build:
       context: ./src/paymentdbservice
@@ -355,7 +365,8 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
-
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "mysql", "service": "paymentdbservice"}]'
   redis:
     image: redis:alpine
     environment:
@@ -367,7 +378,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "mysql", "service": "redis"}]'
   loadgenerator:
     build:
       context: ./src/loadgenerator
@@ -387,7 +399,8 @@ services:
       - /var/run/datadog:/var/run/datadog
     depends_on:
       - frontend
-
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "loadgenerator"}]'
   inventoryservice:
     build:
       context: ./src/inventoryservice
@@ -415,6 +428,7 @@ services:
           memory: 256M
         reservations:
           memory: 128M
-
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "inventoryservice"}]'
 volumes:
   paymentdb_data: 
