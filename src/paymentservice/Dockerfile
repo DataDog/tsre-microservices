@@ -15,7 +15,7 @@ RUN mkdir -p /app/data
 RUN chmod -R 777 /app/data
 
 # Chris: just testing something with version 0.6.1 - broke artifactory so will just use local builds for now. What could go wrong?
-COPY releases/paymentservicejava-0.6.1.jar /app/paymentservice.jar
+COPY releases/paymentservicejava-0.6.0.jar /app/paymentservice.jar
 
 WORKDIR /app
 RUN wget -O dd-java-agent.jar https://dtdg.co/latest-java-tracer

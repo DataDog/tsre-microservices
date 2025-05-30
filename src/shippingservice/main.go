@@ -58,7 +58,11 @@ func init() {
 }
 
 func main() {
-	tracer.Start(tracer.WithRuntimeMetrics())
+	tracer.Start(
+		tracer.WithRuntimeMetrics(),
+		tracer.WithLogStartup(false),
+		tracer.WithDebugMode(false),
+	)
 	defer tracer.Stop()
 	err := profiler.Start(
 		profiler.WithProfileTypes(
@@ -72,6 +76,7 @@ func main() {
 			// profiler.MutexProfile,
 			// profiler.GoroutineProfile,
 		),
+		profiler.WithLogStartup(false),  // Disable the startup log
 	)
 	if err != nil {
 		log.Fatal(err)

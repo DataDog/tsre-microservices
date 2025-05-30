@@ -49,6 +49,7 @@ services:
       depends_on:
         - redis
       pid: host
+      restart: unless-stopped
   emailservice:
     build:
       context: ./src/emailservice
@@ -69,7 +70,7 @@ services:
       - /var/run/datadog:/var/run/datadog
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "emailservice"}]'
-
+    restart: unless-stopped
   productcatalogservice:
     build:
       context: ./src/productcatalogservice
@@ -87,7 +88,7 @@ services:
       - /var/run/datadog:/var/run/datadog
     labels:
       com.datadoghq.ad.logs: '[{"source": "go", "service": "productcatalogservice"}]'
-
+    restart: unless-stopped
   recommendationservice:
     build:
       context: ./src/recommendationservice
@@ -109,7 +110,7 @@ services:
       - /var/run/datadog:/var/run/datadog
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "recommendationservice"}]'
-
+    restart: unless-stopped
   shippingservice:
     build:
       context: ./src/shippingservice
@@ -127,7 +128,7 @@ services:
       - /var/run/datadog:/var/run/datadog
     labels:
       com.datadoghq.ad.logs: '[{"source": "go", "service": "shippingservice"}]'
-
+    restart: unless-stopped
   checkoutservice:
     build:
       context: ./src/checkoutservice
@@ -153,6 +154,7 @@ services:
       - /var/run/datadog:/var/run/datadog
     labels:
       com.datadoghq.ad.logs: '[{"source": "go", "service": "checkoutservice"}]'
+    restart: unless-stopped
   paymentservice:
     build:
       context: ./src/paymentservice
@@ -185,11 +187,10 @@ services:
       - /var/run/datadog:/var/run/datadog
     depends_on:
       paymentdbservice:
-        condition: service_healthy
-    restart: on-failure
+        condition: service_started
+    restart: unless-stopped
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "paymentservice"}]'
-
   currencyservice:
     build:
       context: ./src/currencyservice
@@ -210,7 +211,7 @@ services:
       - /var/run/datadog:/var/run/datadog
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "currencyservice"}]'
-
+    restart: unless-stopped
   cartservice:
     build:
       context: ./src/cartservice/src
@@ -238,7 +239,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    restart: on-failure
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:7070", "-rpc-timeout=5s"]
       interval: 10s
@@ -281,9 +282,7 @@ services:
     depends_on:
       cartservice:
         condition: service_healthy
-    restart: on-failure
-    
-
+    restart: unless-stopped
   adservice:
     build:
       context: ./src/adservice
@@ -303,6 +302,7 @@ services:
       - /var/run/datadog:/var/run/datadog
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "adservice"}]'
+    restart: unless-stopped
   paymentdbservice:
     build:
       context: ./src/paymentdbservice
@@ -353,12 +353,6 @@ services:
       docker-entrypoint.sh mariadbd"
     volumes:
       - paymentdb_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD-SHELL", "timeout 1 bash -c '>/dev/tcp/localhost/3306'"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
     restart: unless-stopped
     labels:
       com.datadoghq.ad.logs: '[{"source": "mysql", "service": "paymentdbservice"}]'
@@ -375,6 +369,7 @@ services:
       retries: 5
     labels:
       com.datadoghq.ad.logs: '[{"source": "mysql", "service": "redis"}]'
+    restart: unless-stopped
   loadgenerator:
     build:
       context: ./src/loadgenerator
@@ -396,11 +391,11 @@ services:
       - frontend
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "loadgenerator"}]'
+    restart: unless-stopped
   inventoryservice:
     build:
       context: ./src/inventoryservice
     image: tsre/inventoryservice:0.1.0
-    restart: on-failure
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=inventoryservice
@@ -423,5 +418,6 @@ services:
           memory: 64M
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "inventoryservice"}]'
+    restart: unless-stopped
 volumes:
   paymentdb_data: 
