@@ -2,9 +2,9 @@ import os
 import sys
 import time
 import random
-import redis
 from flask import Flask, jsonify, request
 from logger import getJSONLogger
+from collections import defaultdict
 
 app = Flask(__name__)
 
@@ -14,59 +14,70 @@ logger = getJSONLogger('inventoryservice')
 # Simulate inventory data
 inventory_data = {}
 
-def connect_to_redis():
-    """Attempt to connect to Redis with increasing backoff"""
-    redis_host = os.getenv("REDIS_HOST", "redis")
-    redis_port = int(os.getenv("REDIS_PORT", "6379"))
-    
-    logger.info(f"Attempting to connect to Redis at {redis_host}:{redis_port}")
-    try:
-        # Simulate Redis connection issues
-        if random.random() < 0.7:  # 70% chance of connection failure
-            raise redis.ConnectionError("Failed to connect to Redis")
-            
-        redis_client = redis.Redis(host=redis_host, port=redis_port)
-        logger.info("Successfully connected to Redis")
-        return redis_client
-    except Exception as e:
-        logger.error(f"Redis connection failed: {str(e)}", extra={
-            'redis_host': redis_host,
-            'redis_port': redis_port,
-            'error_type': type(e).__name__
-        })
-        raise
+# Cache for product history - this will grow unbounded
+product_history_cache = defaultdict(list)
+# Cache for analytics data - also grows unbounded
+analytics_cache = defaultdict(lambda: {'views': 0, 'updates': 0, 'history': []})
 
 def process_inventory():
-    """Process inventory data with Redis dependency"""
-    backoff = 1
-    max_backoff = 30
-    consecutive_failures = 0
-    
+    """Process inventory data"""
     while True:
         try:
-            # Try to connect to Redis
-            redis_client = connect_to_redis()
-            
-            # If we get here, connection was successful
-            if consecutive_failures > 0:
-                logger.info(f"Recovered from {consecutive_failures} consecutive failures")
-                consecutive_failures = 0
-            
-            backoff = 1  # Reset backoff on success
-            
             # Simulate normal inventory processing
             start_time = time.time()
             products_processed = 0
             
-            for i in range(100):
+            for i in range(50):  # Reduced from 200 to 50 products per iteration
+                # Normal inventory processing
                 product_id = f"PROD-{random.randint(1000, 9999)}"
                 stock = random.randint(0, 100)
                 reserved = random.randint(0, 50)
                 
+                # Update inventory
                 inventory_data[product_id] = {
                     'stock': stock,
                     'reserved': reserved
                 }
+                
+                # Memory leak: Store complete history of every change with larger data
+                # This is a common mistake in real applications
+                product_history_cache[product_id].append({
+                    'timestamp': time.time(),
+                    'stock': stock,
+                    'reserved': reserved,
+                    'change_id': f"CHG-{random.randint(10000, 99999)}",
+                    'metadata': {
+                        'source': random.choice(['manual', 'auto', 'sync']),
+                        'user': f"user_{random.randint(1, 100)}",
+                        'reason': random.choice(['restock', 'sale', 'adjustment', 'return']),
+                        'details': {
+                            'location': f"warehouse_{random.randint(1, 5)}",
+                            'batch': f"batch_{random.randint(1000, 9999)}",
+                            'notes': 'x' * 400,  # Increased from 200 to 400
+                            'additional_data': {
+                                'items': [{'id': j, 'value': 'x' * 100} for j in range(30)]  # Increased from 20 to 30 items
+                            }
+                        }
+                    }
+                })
+                
+                # Memory leak: Store analytics data without cleanup
+                analytics_cache[product_id]['views'] += random.randint(1, 10)
+                analytics_cache[product_id]['updates'] += 1
+                analytics_cache[product_id]['history'].append({
+                    'timestamp': time.time(),
+                    'action': random.choice(['view', 'update', 'check']),
+                    'user_agent': f"browser_{random.randint(1, 5)}",
+                    'session_id': f"sess_{random.randint(10000, 99999)}",
+                    'response_time': random.uniform(0.1, 2.0),
+                    'additional_metrics': {
+                        'cpu_usage': random.uniform(0, 100),
+                        'memory_usage': random.uniform(0, 100),
+                        'network_latency': random.uniform(0, 1000),
+                        'detailed_trace': 'x' * 200  # Increased from 100 to 200
+                    }
+                })
+                
                 products_processed += 1
                 
                 # Log low stock warnings
@@ -76,32 +87,35 @@ def process_inventory():
                         'current_stock': stock,
                         'reserved': reserved
                     })
+                
+                # Log memory usage every 10 iterations
+                if i % 10 == 0:
+                    total_history_entries = sum(len(history) for history in product_history_cache.values())
+                    total_analytics_entries = sum(len(data['history']) for data in analytics_cache.values())
+                    logger.info(f"Memory usage metrics", extra={
+                        'iteration': i,
+                        'products_processed': products_processed,
+                        'total_products': len(inventory_data),
+                        'total_history_entries': total_history_entries,
+                        'total_analytics_entries': total_analytics_entries,
+                        'cache_size': len(product_history_cache) + len(analytics_cache)
+                    })
             
             processing_time = time.time() - start_time
             logger.info(f"Inventory processing complete", extra={
                 'products_processed': products_processed,
                 'processing_time_seconds': round(processing_time, 2),
-                'total_products': len(inventory_data)
+                'total_products': len(inventory_data),
+                'total_history_entries': sum(len(history) for history in product_history_cache.values()),
+                'total_analytics_entries': sum(len(data['history']) for data in analytics_cache.values())
             })
             
-            time.sleep(5)
-            
-        except redis.ConnectionError as e:
-            consecutive_failures += 1
-            logger.error(f"Redis connection error (attempt {consecutive_failures})", extra={
-                'error': str(e),
-                'backoff_seconds': backoff,
-                'consecutive_failures': consecutive_failures
-            })
-            # Exponential backoff
-            time.sleep(backoff)
-            backoff = min(backoff * 2, max_backoff)
+            time.sleep(2)  # Increased from 1 to 2 seconds
             
         except Exception as e:
             logger.error(f"Unexpected error in inventory processing", extra={
                 'error': str(e),
-                'error_type': type(e).__name__,
-                'consecutive_failures': consecutive_failures
+                'error_type': type(e).__name__
             })
             sys.exit(1)
 
@@ -115,6 +129,22 @@ def get_inventory(product_id):
     logger.info(f"Inventory lookup requested", extra={
         'product_id': product_id,
         'client_ip': request.remote_addr
+    })
+    
+    # Memory leak: Track every request in analytics without cleanup
+    analytics_cache[product_id]['views'] += 1
+    analytics_cache[product_id]['history'].append({
+        'timestamp': time.time(),
+        'action': 'view',
+        'user_agent': request.headers.get('User-Agent', 'unknown'),
+        'session_id': request.headers.get('X-Session-ID', 'unknown'),
+        'response_time': random.uniform(0.1, 2.0),
+        'additional_metrics': {
+            'cpu_usage': random.uniform(0, 100),
+            'memory_usage': random.uniform(0, 100),
+            'network_latency': random.uniform(0, 1000),
+            'detailed_trace': 'x' * 100  # Reduced from 500 to 100
+        }
     })
     
     if product_id in inventory_data:
@@ -137,10 +167,7 @@ def get_inventory(product_id):
 
 if __name__ == '__main__':
     try:
-        logger.info("Starting inventory service", extra={
-            'redis_host': os.getenv("REDIS_HOST", "redis"),
-            'redis_port': os.getenv("REDIS_PORT", "6379")
-        })
+        logger.info("Starting inventory service")
         process_inventory()
     except Exception as e:
         logger.error(f"Service failed to start", extra={

@@ -413,16 +413,14 @@ services:
       - DD_TRACE_SAMPLE_RATE=1
       - DD_PROFILING_ENABLED=true
       - PORT=8081
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
     volumes:
       - /var/run/datadog:/var/run/datadog
     deploy:
       resources:
         limits:
-          memory: 256M
-        reservations:
           memory: 128M
+        reservations:
+          memory: 64M
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "inventoryservice"}]'
 volumes:
