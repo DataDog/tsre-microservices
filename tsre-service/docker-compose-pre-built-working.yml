@@ -272,6 +272,8 @@ services:
       - CART_SERVICE_RETRY_ATTEMPTS=3
       - CART_SERVICE_RETRY_DELAY=1000
       - CART_SERVICE_TIMEOUT=5000
+      # Security stuff
+      - DD_APPSEC_ENABLED=true
     volumes:
       - /var/run/datadog:/var/run/datadog
     labels:
