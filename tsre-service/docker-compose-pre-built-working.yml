@@ -349,7 +349,9 @@ services:
       com.datadoghq.ad.logs: '[{"source": "mysql", "service": "redis"}]'
     restart: unless-stopped
   loadgenerator:
-    image: public.ecr.aws/v6x4t1k2/loadgenerator:tsre.v0.1.0
+    build:
+      context: ./src/loadgenerator
+    image: tsre/loadgenerator:0.1.0
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=loadgenerator
