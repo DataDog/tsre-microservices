@@ -146,7 +146,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "go", "service": "checkoutservice"}]'
     restart: unless-stopped
   paymentservice:
-    image: public.ecr.aws/v6x4t1k2/paymentservice:tsre.v0.6.1
+    image: public.ecr.aws/v6x4t1k2/paymentservice:tsre.v0.7.1
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=paymentservice
