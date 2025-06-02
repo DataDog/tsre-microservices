@@ -233,7 +233,9 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "csharp", "service": "cartservice"}]'
   frontend:
-    image: public.ecr.aws/v6x4t1k2/frontend:tsre.v0.4.1
+    build:
+      context: ./src/frontend
+    image: tsre/frontend:0.4.1
     ports:
       - "80:8088"
     environment:
