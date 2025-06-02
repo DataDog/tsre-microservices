@@ -392,6 +392,21 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "loadgenerator"}]'
     restart: unless-stopped
+  loggenerator:
+    build:
+      context: ./src/loggenerator
+    image: tsre/loggenerator:0.1.0
+    environment:
+      - DD_API_KEY
+      - DD_APP_KEY
+      - REPLAY_BATCH_SIZE=5
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+    depends_on:
+      - frontend
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "loggenerator"}]'
+    restart: unless-stopped
   inventoryservice:
     build:
       context: ./src/inventoryservice

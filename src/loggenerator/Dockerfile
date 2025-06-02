@@ -1,7 +1,6 @@
-FROM --platform=$BUILDPLATFORM python:3.10.8-slim as base
-#FROM --platform=linux/amd64 python:3.10.8-slim as base
+FROM --platform=$BUILDPLATFORM python:3.13-slim as base
 
-FROM base as builder
+FROM base
 
 RUN apt-get -qq update \
     && apt-get install -y --no-install-recommends \
@@ -20,10 +19,7 @@ RUN pip install -r requirements.txt
 # Enable unbuffered logging
 ENV PYTHONUNBUFFERED=1
 
-WORKDIR /email_server
-
-# Grab packages from builder
-COPY --from=builder /usr/local/lib/python3.10/ /usr/local/lib/python3.10/
+WORKDIR /app
 
 # Add the application
 COPY . .
