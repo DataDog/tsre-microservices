@@ -8,7 +8,7 @@ services:
         DD_SITE: datadoghq.com
         DD_LOGS_ENABLED: "true"
         DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
-        DD_CONTAINER_EXCLUDE: "name:dd-agent"
+        DD_CONTAINER_EXCLUDE: "name:dd-agent name:loggenerator"
         DD_PROCESS_CONFIG_CONTAINER_COLLECTION_ENABLED: "true"
         DD_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED: "true"
         DD_APM_ENABLED: "true"
