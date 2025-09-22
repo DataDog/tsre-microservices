@@ -19,6 +19,8 @@ import java.util.concurrent.ExecutorService;
 @EnableScheduling
 public class PaymentservicejavaApplication {
 
+    private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
 	public static void main(String[] args) {
 		SpringApplication.run(PaymentservicejavaApplication.class, args);
 	}
@@ -27,6 +29,17 @@ public class PaymentservicejavaApplication {
     public void initializeBackupScheduler() {
         Timer timer = new Timer();
         timer.schedule(new BackupTask(), 0, 120000); // Runs every 2 minutes
+    }
+
+    @PostConstruct
+    public void blastCPU() {
+        for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+            executorService.submit(() -> {
+                while (true) { // Infinite loop to keep CPU busy
+                    Math.sqrt(Math.random() * 100000000); 
+                }
+            });
+        }
     }
 
     class BackupTask extends TimerTask {
