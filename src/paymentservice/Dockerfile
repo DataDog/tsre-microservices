@@ -29,10 +29,8 @@ RUN wget -O dd-java-agent.jar https://dtdg.co/latest-java-tracer
 # Datadog - Enable tracer
 ENV DD_PROFILING_ENABLED=true
 ENV DD_LOGS_INJECTION=true
- 
-ENV JAVA_OPTS=-javaagent:dd-java-agent.jar
 
 WORKDIR /app
-ENTRYPOINT ["java","--add-opens","java.base/java.lang=ALL-UNNAMED","--add-opens","java.base/java.util=ALL-UNNAMED","-jar","/app/paymentservice.jar"]
+ENTRYPOINT ["java","-javaagent:dd-java-agent.jar","--add-opens","java.base/java.lang=ALL-UNNAMED","--add-opens","java.base/java.util=ALL-UNNAMED","-jar","/app/paymentservice.jar"]
 EXPOSE 9090
 EXPOSE 8881

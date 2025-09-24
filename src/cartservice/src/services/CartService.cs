@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,8 @@ namespace cartservice.services
 
         public async override Task<Empty> AddItem(AddItemRequest request, ServerCallContext context)
         {
+            // Sleep for APM investigation demo
+            Thread.Sleep(5000);
             await _cartStore.AddItemAsync(request.UserId, request.Item.ProductId, request.Item.Quantity);
             return Empty;
         }
