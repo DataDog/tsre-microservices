@@ -1,7 +1,7 @@
 name: tsre
 services:
   dd-agent:
-      image: gcr.io/datadoghq/agent:7.66.0
+      image: gcr.io/datadoghq/agent:7.71.2
       environment:
         - DD_API_KEY=${DD_API_KEY}
         - DD_ENV=tsreenv
@@ -18,6 +18,7 @@ services:
         - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
         - DD_DOCKER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
         - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
+        - DD_PROFILING_ENABLED=auto
         - DD_SYSTEM_PROBE_NETWORK_ENABLED=true
         # Security stuff
         - DD_RUNTIME_SECURITY_CONFIG_ENABLED=true
@@ -37,6 +38,7 @@ services:
         - /proc/:/host/proc/:ro
         - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
         - /var/run/datadog:/var/run/datadog
+        - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
         - /sys/kernel/debug:/sys/kernel/debug
         - /etc/passwd:/etc/passwd:ro
         - /etc/group:/etc/group:ro
