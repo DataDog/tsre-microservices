@@ -18,7 +18,6 @@ services:
         - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
         - DD_DOCKER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
         - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
-        - DD_PROFILING_ENABLED=auto
         - DD_SYSTEM_PROBE_NETWORK_ENABLED=true
         # Security stuff
         - DD_RUNTIME_SECURITY_CONFIG_ENABLED=true
