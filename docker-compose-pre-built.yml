@@ -8,7 +8,7 @@ services:
         - DD_SITE=datadoghq.com
         - DD_LOGS_ENABLED=true
         - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-        - DD_CONTAINER_EXCLUDE=name:dd-agent name:loggenerator name:loadgenerator
+        - DD_CONTAINER_EXCLUDE=name:dd-agent name:loggenerator
         - DD_PROCESS_CONFIG_CONTAINER_COLLECTION_ENABLED=true
         - DD_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED=true
         - DD_APM_ENABLED=true
@@ -37,7 +37,6 @@ services:
         - /proc/:/host/proc/:ro
         - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
         - /var/run/datadog:/var/run/datadog
-        - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
         - /sys/kernel/debug:/sys/kernel/debug
         - /etc/passwd:/etc/passwd:ro
         - /etc/group:/etc/group:ro
@@ -418,20 +417,22 @@ services:
       - DD_ENV=tsreenv
       - DD_SERVICE=loadgenerator
       - DD_VERSION=0.1.0
-      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - FRONTEND_ADDR=frontend:8088
-      - DISABLE_PROFILER=1
-      - DISABLE_TRACING=1
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_SAMPLE_RATE=1
-      - DD_PROFILING_ENABLED=false
+      - USERS=10
+      - NODE_ENV=tsreenv
     volumes:
       - /var/run/datadog:/var/run/datadog
     depends_on:
       - frontend
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "loadgenerator"}]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "loadgenerator"}]'
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
   loggenerator:
     build:
       context: ./src/loggenerator
