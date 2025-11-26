@@ -8,7 +8,7 @@ services:
         - DD_SITE=datadoghq.com
         - DD_LOGS_ENABLED=true
         - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-        - DD_CONTAINER_EXCLUDE=name:dd-agent name:loggenerator
+        - DD_CONTAINER_EXCLUDE=name:dd-agent name:loggenerator #name:loadgenerator
         - DD_PROCESS_CONFIG_CONTAINER_COLLECTION_ENABLED=true
         - DD_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED=true
         - DD_APM_ENABLED=true
@@ -410,9 +410,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "mysql", "service": "redis"}]'
     restart: unless-stopped
   loadgenerator:
-    build:
-      context: ./src/loadgenerator
-    image: tsre/loadgenerator:0.1.0
+    image: public.ecr.aws/v6x4t1k2/loadgenerator:tsre.v0.1.0
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=loadgenerator
