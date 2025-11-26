@@ -18,7 +18,6 @@ services:
         - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
         - DD_DOCKER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
         - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
-        - DD_PROFILING_ENABLED=auto
         - DD_SYSTEM_PROBE_NETWORK_ENABLED=true
         # Security stuff
         - DD_RUNTIME_SECURITY_CONFIG_ENABLED=true
@@ -435,19 +434,15 @@ services:
       - DD_ENV=tsreenv
       - DD_SERVICE=loadgenerator
       - DD_VERSION=0.1.0
-      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
       - FRONTEND_ADDR=frontend:8088
-      - DISABLE_PROFILER=1
-      - DISABLE_TRACING=1
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_SAMPLE_RATE=1
-      - DD_PROFILING_ENABLED=false
+      - USERS=10
+      - NODE_ENV=tsreenv
     volumes:
       - /var/run/datadog:/var/run/datadog
     depends_on:
       - frontend
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "loadgenerator"}]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "loadgenerator"}]'
     restart: unless-stopped
   loggenerator:
     build:

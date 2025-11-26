@@ -12,53 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Use Node.js slim base and install only Chromium
+FROM node:18-slim
 
-# FROM python:3.11.1-slim@sha256:54924a2ee4a2ef17028ae076ce38e59b3f4054353a5c9f9318dfaee60377532c as base
-
-# FROM base as builder
-
-# COPY requirements.txt .
-
-# RUN pip install --prefix="/install" -r requirements.txt
-
-# FROM base
-
-# WORKDIR /loadgen
-
-# COPY --from=builder /install /usr/local
-
-# # Add application code.
-# COPY locustfile.py .
-
-# # enable gevent support in debugger
-# ENV GEVENT_SUPPORT=True
-
-# ENTRYPOINT locust --host="http://${FRONTEND_ADDR}" --headless -u "${USERS:-10}" 2>&1
-
-# Failing platform spec MANUALLY overridding it
-FROM --platform=$BUILDPLATFORM python:3.9.19-slim as base
-
-FROM base as builder
-
-RUN apt-get -qq update \
-    && apt-get install -y --no-install-recommends \
-        g++
-
-COPY requirements.txt .
-
-RUN pip install --upgrade setuptools>=75.8.2 && \
-    pip install --prefix="/install" -r requirements.txt
-
-FROM base
+# Install dependencies for Chromium
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    xdg-utils \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /loadgen
 
-COPY --from=builder /install /usr/local
+# Copy package files and install Node dependencies
+COPY package*.json ./
+RUN npm install --production && \
+    npx playwright install chromium --with-deps && \
+    rm -rf /root/.npm
 
-# Add application code.
-COPY locustfile.py .
+# Copy application code
+COPY index.js ./
+COPY user-journeys.js ./
+COPY logger.js ./
 
-# enable gevent support in debugger
-ENV GEVENT_SUPPORT=True
+# Set environment variables
+ENV NODE_ENV=production
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
 
-ENTRYPOINT locust --host="http://${FRONTEND_ADDR}" --headless -u "${USERS:-10}" 2>&1
+# Run the load generator
+CMD ["node", "index.js"]
