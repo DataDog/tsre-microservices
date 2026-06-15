@@ -21,5 +21,19 @@
     "@opentelemetry/sdk-node": "0.34.0",
     "pino": "8.8.0",
     "xml2js": "0.4.23"
+  },
+  "overrides": {
+    "@google-cloud/profiler": {
+      "protobufjs-cli": "^1.3.3",
+      "brace-expansion": "^2.0.3",
+      "minimatch": "^5.1.9",
+      "uuid": "^9.0.1"
+    },
+    "@google-cloud/trace-agent": {
+      "uuid": "^9.0.1"
+    },
+    "async-listener": {
+      "semver": "^5.7.2"
+    }
   }
 }
