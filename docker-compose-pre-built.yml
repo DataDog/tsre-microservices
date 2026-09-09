@@ -64,9 +64,7 @@ services:
       pid: host
       restart: unless-stopped
   emailservice:
-    build:
-      context: ./src/emailservice
-    image: tsre/emailservice:0.1.0
+    image: image: public.ecr.aws/v6x4t1k2/emailservice:298ecf5
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=emailservice
@@ -109,9 +107,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "go", "service": "productcatalogservice"}]'
     restart: unless-stopped
   recommendationservice:
-    build:
-      context: ./src/recommendationservice
-    image: tsre/recommendationservice:0.1.0
+    image: image: public.ecr.aws/v6x4t1k2/recommendationservice:298ecf5
     environment:
       - DD_ENV=tsreenv
       - DD_SERVICE=recommendationservice
