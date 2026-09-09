@@ -18,7 +18,7 @@
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
 # Build Go
-FROM --platform=$BUILDPLATFORM golang:1.20.5-alpine as builder
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine as builder
 
 COPY --from=xx / /
 ARG TARGETPLATFORM
